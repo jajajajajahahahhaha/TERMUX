@@ -1,67 +1,124 @@
-# دستیار هوش مصنوعی ترموکس (MiniMax)
+# 🤖 Termux AI Assistant (MiniMax M2 + GitHub Actions Backend)
 
-دستیار خط‌فرمانی که داخل Termux اجرا می‌شود و از مدل **MiniMax-M2.7** (از طریق
-API سازگار با OpenAI) استفاده می‌کند. قابلیت‌ها:
+یک دستیار هوش مصنوعی agentic که:
+- کلاینت سبک تو **Termux** اجرا میشه (فقط سوال می‌پرسه، UI قشنگ، فارسی درست)
+- مغز اصلی (**MiniMax M2 + Search + Sandbox**) روی **GitHub Actions** اجرا میشه
+- حافظه چت، تفکر تطبیقی، اجازه گرفتن قبل از ساخت فایل تو Termux
 
-- 📁 ساخت / ویرایش / حذف فایل — **همیشه با تأیید دستی کاربر قبل از اجرا**
-- 🧪 اجرای کد پایتون/بش در یک سندباکس ایزوله برای تست و دیباگ
-- 🔍 جستجوی وب برای اطلاعات به‌روز
-- 🧠 برنامه‌ریزی داخلی قبل از اجرا (تخمین پیچیدگی/زمان هر مرحله)
-- ✅ تایپ‌هینت کامل، مدیریت خطا، و تست واحد (pytest) روی منطق حساس
+## 📂 ساختار پروژه
 
-## نصب در Termux
+```
+aiproject/
+├── .github/workflows/
+│   └── agent.yml              # ← GitHub Action که وقتی سوال میاد اجرا میشه
+├── agent/
+│   ├── main.py                # ← نقطه ورود Action - مدیر کل
+│   ├── llm.py                 # ← ارتباط با MiniMax M2
+│   ├── tools.py               # ← سرچ DuckDuckGo + Sandbox اجرای کد
+│   ├── memory.py              # ← حافظه چت (JSON + خلاصه‌سازی)
+│   ├── thinking.py            # ← تصمیم‌گیر سطح تفکر (adaptive)
+│   └── prompts.py             # ← system prompt دو زبانه
+├── memory/
+│   └── chat_history.json      # ← حافظه persistent (خودکار آپدیت میشه)
+├── termux_client/
+│   ├── ask.py                 # ← اسکریپت اصلی Termux (UI فارسی)
+│   └── setup_termux.sh        # ← نصب خودکار روی Termux
+├── requirements.txt
+└── README.md
+```
+
+## 🚀 نصب و راه‌اندازی — قدم به قدم
+
+### قدم ۱: ساخت ریپو خصوصی روی GitHub
+
+1. برو به https://github.com/new
+2. نام: `my-ai-assistant` (یا هرچی دوست داری)
+3. **Private** بذارش
+4. Create repository
+
+### قدم ۲: آپلود این فایل‌ها
 
 ```bash
-pkg update && pkg install python git -y
-git clone <آدرس-ریپوی-شما>
-cd termux_ai_project
-pip install -r requirements.txt
-cp .env.example .env
-# سپس MINIMAX_API_KEY را داخل .env با مقدار واقعی خودتان پر کنید
+cd aiproject
+git init
+git add .
+git commit -m "initial"
+git remote add origin https://github.com/USERNAME/my-ai-assistant.git
+git push -u origin main
 ```
 
-## اجرا
+### قدم ۳: تنظیم Secrets در GitHub
+
+برو به: `Settings → Secrets and variables → Actions → New repository secret`
+
+سه تا secret اضافه کن:
+
+| Name | Value |
+|------|-------|
+| `MINIMAX_API_KEY` | توکن MiniMax تو (`dahl_...` یا هر توکن دیگه) |
+| `MINIMAX_BASE_URL` | `https://api.minimax.io/v1` (یا هر endpointای که توکنت مال اونه) |
+| `MINIMAX_MODEL` | `MiniMax-M2` (یا `MiniMax-M2.7`) |
+
+> ⚠️ توکنی که دادی (`dahl_...`) روی endpointهای معروف کار نکرد. وقتی provider درستشو پیدا کردی، فقط این ۳ تا secret رو عوض کن، **هیچ تغییری تو کد لازم نیست**.
+
+### قدم ۴: ساخت Personal Access Token (PAT)
+
+Termux نیاز داره Actionرو trigger کنه:
+
+1. برو به: https://github.com/settings/tokens/new
+2. Note: `termux-ai-client`
+3. Expiration: `No expiration` (یا هرچی)
+4. Scope: فقط `repo` رو تیک بزن
+5. Generate → توکن رو کپی کن (`ghp_...`)
+
+### قدم ۵: نصب روی Termux
 
 ```bash
-export MINIMAX_API_KEY='کلید-واقعی-شما'
-python main.py
+pkg update -y && pkg install -y python git
+pip install requests rich
+
+git clone https://github.com/USERNAME/my-ai-assistant.git
+cd my-ai-assistant/termux_client
+bash setup_termux.sh
 ```
 
-یا با فایل `.env` (نیازی به export نیست، خودش خوانده می‌شود).
+اسکریپت `setup_termux.sh` ازت این چیزها رو می‌پرسه و ذخیره می‌کنه:
+- GitHub username
+- Repo name
+- PAT (`ghp_...`)
 
-## اجرای تست‌ها
+### قدم ۶: اجرا 🎉
 
 ```bash
-pip install pytest
-python -m pytest tests/ -v
+python ask.py
 ```
 
-## ⚠️ نکات امنیتی مهم
-
-1. **هرگز** کلید API یا توکن گیت‌هاب را در کد هاردکد نکنید یا در چت/پیام به
-   اشتراک نگذارید. تنها راه درست: متغیر محیطی یا فایل `.env` (که در
-   `.gitignore` قرار دارد و پوش نمی‌شود).
-2. اگر توکنی را جایی (چت، اسکرین‌شات، پیام) به اشتراک گذاشته‌اید، فرض کنید
-   لو رفته و **فوراً آن را Revoke/باطل کنید** و یک توکن جدید بسازید.
-3. پیش‌فرض این پروژه، عملیات فایل را به داخل `$HOME` کاربر محدود می‌کند. برای
-   باز کردن این محدودیت باید عمداً `ALLOW_UNSAFE_PATHS=1` را تنظیم کنید — این
-   کار توصیه نمی‌شود مگر با آگاهی کامل از خطر آن.
-4. اجرای کد در سندباکس با `timeout` محدود می‌شود تا کد معیوب/بی‌پایان کل
-   دستیار را قفل نکند.
-
-## ساختار پروژه
+## 🎯 نحوه کار
 
 ```
-termux_ai_project/
-├── main.py                 # حلقه چت + دیسپچر ابزارها
-├── config.py                # بارگذاری امن تنظیمات از env
-├── tools/
-│   ├── confirm.py            # واسط تأیید کاربر (گیت امنیتی مشترک)
-│   ├── file_ops.py           # ساخت/ویرایش/حذف فایل
-│   ├── code_sandbox.py       # اجرای کد ایزوله با timeout
-│   ├── web_search.py         # جستجوی وب (ddgs)
-│   ├── planner.py            # پرامپت سیستمی + منطق برنامه‌ریزی
-│   └── schema.py             # تعریف ابزارها برای Function Calling
-├── tests/                    # تست‌های واحد pytest
-└── .github/workflows/tests.yml  # CI: اجرای تست‌ها روی هر push/PR
+[تو تو Termux] سوال میپرسی
+        ↓
+[Termux client] از طریق repository_dispatch API میفرسته به GitHub
+        ↓
+[GitHub Actions] MiniMax M2 فکر میکنه
+        ├─ اگه سرچ لازمه → DuckDuckGo
+        ├─ اگه کد اجرا لازمه → Sandbox runner
+        └─ اگه ساخت فایل تو Termux → اجازه میخواد
+        ↓
+[GitHub] جواب رو تو memory/chat_history.json کامیت میکنه
+        ↓
+[Termux client] فایل رو pull میکنه و با UI قشنگ نشون میده
 ```
+
+## 🧠 قابلیت‌های Agentic
+
+- **تفکر تطبیقی**: هر سوال رو ابتدا analyze می‌کنه و تصمیم می‌گیره چقدر عمیق فکر کنه
+- **Tool use**: خودش تصمیم می‌گیره کی سرچ کنه، کی کد اجرا کنه، کی فایل بسازه
+- **اجازه‌گیری**: قبل از ساخت فایل تو Termux، از تو تایید می‌گیره
+- **حافظه**: تمام مکالمات با خلاصه‌سازی خودکار وقتی طولانی شد
+
+## 🌐 پشتیبانی از فارسی
+
+- کلاینت Termux از `python-bidi` و `arabic-reshaper` استفاده می‌کنه که فارسی برعکس چاپ نشه
+- UI با `rich` طراحی شده — پنل، جدول، رنگ، spinner
+- دو زبانه: می‌تونی فارسی یا انگلیسی بپرسی
