@@ -1,9 +1,9 @@
 {
-  "request_id": "031c6cb46a7f",
+  "request_id": "7d86c9baeaf2",
   "question": "سلام",
   "answer": "❌ خطا در فراخوانی مدل / LLM error:\nLLM call failed on both endpoints.\nOpenAI-style error: HTTP 403: <!DOCTYPE html><html lang=\"en-US\"><head><title>Just a moment...</title><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\"><meta name=\"robots\" content=\"noindex,nofollow\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"content-security-policy\" content=\"default-src &#39;none&#39;; script-src &#39\nMiniMax-native error: HTTP 403: <!DOCTYPE html><html lang=\"en-US\"><head><title>Just a moment...</title><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\"><meta name=\"robots\" content=\"noindex,nofollow\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"content-security-policy\" content=\"default-src &#39;none&#39;; script-src &#39",
   "file_requests": [],
   "steps_used": 1,
   "complexity": 1,
-  "timestamp": 1783894816
+  "timestamp": 1783895079
 }
